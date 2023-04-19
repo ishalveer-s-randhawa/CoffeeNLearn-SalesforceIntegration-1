@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:salesforce-composite="http://www.mulesoft.org/schema/mule/salesforce-composite"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce-composite http://www.mulesoft.org/schema/mule/salesforce-composite/current/mule-salesforce-composite.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<http:listener-config name="HTTP_Listener_config"
+		doc:name="HTTP Listener config"
+		doc:id="8e44d879-b12c-49c5-880d-4c351ad7861d" basePath="sf">
+		<http:listener-connection host="0.0.0.0"
+			port="8081" />
+	</http:listener-config>
+	<salesforce:sfdc-config name="Salesforce_Config"
+		doc:name="Salesforce Config"
+		doc:id="1846f312-d708-4398-a644-13f3215f31bc"
+		fetchAllApexRestMetadata="true">
+		<salesforce:basic-connection
+			username="user.name@gmail.com" password="password"
+			securityToken="security_token" />
+	</salesforce:sfdc-config>
+	<os:object-store name="Object_store" doc:name="Object store" doc:id="e0a90e9d-4cf3-49e9-9d0a-4d3a7e43c451" entryTtl="23" entryTtlUnit="HOURS" expirationInterval="12" expirationIntervalUnit="HOURS" />
+	<ee:object-store-caching-strategy name="Caching_Strategy" doc:name="Caching Strategy" doc:id="1b6d7897-1c57-405a-8e5e-44f2504ae2d4" objectStore="Object_store" />
+	<flow name="sf-rest-call-pf" doc:id="84fe4bc8-aa24-49a5-bd9e-9d7b919f7595">
+		<http:listener doc:name="HTTP : 8081 /sf/sales-lead" doc:id="49113da1-8b0d-4134-b1ec-27dae63ec7f3" config-ref="HTTP_Listener_config" path="sales-lead-req" />
+		<logger level="INFO" doc:name="START" doc:id="952b3832-7ef4-4d39-9ce9-f315c6b7bd5f" message='#["Start of the flow " ++ flow.name]' />
+		<set-variable value='#[payload]' doc:name="requestData" doc:id="b5508340-43ad-42b7-99a5-855caf8bd7f0" variableName="requestData" />
+		<ee:cache doc:name="Cache" doc:id="537772e9-34e7-4a1c-991b-886e8c5f3f79" cachingStrategy-ref="Caching_Strategy">
+			<http:request method="POST" doc:name="Get Bearer Token" doc:id="6980a88a-c817-4de4-9bbb-a3cdc72f8113" url="https://login.salesforce.com/services/oauth2/token">
+				<http:query-params><![CDATA[#[{
+	username: "username",
+	password: "password",
+	client_id: "consumer_key",
+	client_secret: "consumer_secret",
+	grant_type: "password",
+	security_token: "security_token"
+}]]]></http:query-params>
+			</http:request>
+		</ee:cache>
+		<set-variable value='#["Bearer " ++ payload.access_token]' doc:name="access_token" doc:id="9d15738a-b0b5-4778-9f10-1b6123c462ca" variableName="access_token" />
+		<http:request method="POST" doc:name="Create Sales_Lead__c in SF" doc:id="69136d9f-3042-45e6-9450-50349a560b68" url="https://caeliusconsulting4-dev-ed.my.salesforce.com/services/data/v51.0/sobjects/Sales_Lead__c">
+			<http:body><![CDATA[#[vars.requestData]]]></http:body>
+			<http:headers><![CDATA[#[{
+	"Authorization" : vars.access_token
+}]]]></http:headers>
+		</http:request>
+		<ee:transform doc:name="Prepare Response" doc:id="92e93004-3500-4ec6-ac44-c5587584a119">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Payload" doc:id="21c0654e-33a3-4aea-a558-f670b3bf0351" message="#[output application/json --- payload]" />
+		<logger level="INFO" doc:name="END" doc:id="bca7a52e-551d-45e8-a7a0-79dc68a4824f" message='#["End of the flow " ++ flow.name]' />
+	</flow>
+	<flow name="sf-create-pf" doc:id="275228dc-8e3b-4886-b751-9b90121daa76">
+		<http:listener doc:name="HTTP : 8081 /sf/sales-lead" doc:id="9eb59516-5255-4d09-af19-df8028f7a796" config-ref="HTTP_Listener_config" path="sales-lead" allowedMethods="POST"/>
+		<logger level="INFO" doc:name="START" doc:id="16cab355-2e2e-4fd3-9a9d-ddeb255b160c" message='#["Start of the flow " ++ flow.name]' />
+		<ee:transform doc:name="Prepare Request" doc:id="3ad0b70b-f901-4aa5-98a7-5821520b4822">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create type="Sales_Lead__c" doc:name="Sales_Lead__c" doc:id="346f592b-c9e9-433f-a094-e953953b2a33" config-ref="Salesforce_Config" />
+		<ee:transform doc:name="Prepare Response" doc:id="a77ebf63-28a4-4e99-bb41-c8d4acc93f61">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Payload" doc:id="1c95bbee-17c2-4faf-9c6e-d3a7f4668013" message="#[output application/json --- payload]" />
+		<logger level="INFO" doc:name="END" doc:id="a6ec952c-a863-44b1-9438-27c842a26ca2" message='#["End of the flow " ++ flow.name]' />
+	</flow>
+	<flow name="sf-query-pf" doc:id="d964e2c1-1470-43e5-8601-6fadbb524a5d">
+		<http:listener doc:name="HTTP : 8081 /sf/sales-lead" doc:id="5fef6619-be1b-46c2-8986-c3800cf67e53" config-ref="HTTP_Listener_config" path="sales-lead" allowedMethods="GET"/>
+		<logger level="INFO" doc:name="START" doc:id="6198d802-5328-4947-bb70-5e7032c59ed0" message='#["Start of the flow " ++ flow.name]' />
+		<salesforce:query doc:name="Query" doc:id="eedfc89f-1665-4deb-963b-1f54b0bcd93f" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[SELECT FIELDS(ALL) FROM Sales_Lead__c LIMIT 200]]></salesforce:salesforce-query>
+		</salesforce:query>
+		<ee:transform doc:name="Prepare Response" doc:id="924fb5ad-b412-427a-8541-a6eaf9545b0f">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="END" doc:id="9896fdb4-4cf8-4d7c-bb31-c524c132ea26" message='#["End of the flow " ++ flow.name]' />
+	</flow>
+	<flow name="sf-update-pf" doc:id="dfbe3abf-e384-48e7-bc9c-956b5b8882bf">
+		<http:listener doc:name="HTTP : 8081 /sf/sales-lead" doc:id="19ea9f96-d1e7-401d-8791-2b19eeba9d60" config-ref="HTTP_Listener_config" path="sales-lead" allowedMethods="PUT"/>
+		<logger level="INFO" doc:name="START" doc:id="46c9ed59-0675-4369-8bcb-27e3c9a4353d" message='#["Start of the flow " ++ flow.name]' />
+		<salesforce:update type="Sales_Lead__c" doc:name="Update" doc:id="451bb3d0-1953-407b-b1ee-75f4b3298b94" config-ref="Salesforce_Config" />
+		<ee:transform doc:name="Prepare Response" doc:id="800c1521-e6a0-4592-9cf7-97bc4a816f1b">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="END" doc:id="48c8e018-5477-40de-8fe1-35d341877690" message='#["End of the flow " ++ flow.name]' />
+	</flow>
+	<flow name="sf-upsert-pf" doc:id="3f46c083-8ad0-4db5-87d9-31fc9ca10425">
+		<http:listener doc:name="HTTP : 8081 /sf/sales-lead" doc:id="611b9771-9ffd-463c-975b-81f402b78617" config-ref="HTTP_Listener_config" path="sales-lead-upsert" />
+		<logger level="INFO" doc:name="START" doc:id="c679c7a5-0a69-4ded-88e8-ff34a34a2e91" message='#["Start of the flow " ++ flow.name]' />
+		<salesforce:upsert doc:name="Upsert" doc:id="0a34d301-da8a-416b-a370-d6fd4de0ae63" config-ref="Salesforce_Config" objectType="Sales_Lead__c" externalIdFieldName="id__c"/>
+		<ee:transform doc:name="Prepare Response" doc:id="ba3fbaa0-48d8-47bc-b0b8-04aa9ddc547e">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="END" doc:id="f93091ce-b9a8-42d1-b164-7a84e9b7ee53" message='#["End of the flow " ++ flow.name]' />
+	</flow>
+	<flow name="sf-delete-pf" doc:id="35d5868a-a94b-45f3-ab8e-2c008c1a3352">
+		<http:listener doc:name="HTTP : 8081 /sf/sales-lead" doc:id="c06b5749-d9d0-48a7-86b6-5be0209b0b87" config-ref="HTTP_Listener_config" path="sales-lead/{id}" allowedMethods="DELETE"/>
+		<logger level="INFO" doc:name="START" doc:id="2c610a91-32dc-4b69-9205-26dee4d28816" message='#["Start of the flow " ++ flow.name]' />
+		<salesforce:delete doc:name="Delete" doc:id="0a07fdbb-f005-4238-86f2-098f6fe77ce2" config-ref="Salesforce_Config">
+			<salesforce:ids ><![CDATA[#[[attributes.uriParams.id]]]]></salesforce:ids>
+		</salesforce:delete>
+		<ee:transform doc:name="Prepare Response" doc:id="6db24534-e58d-44f3-a171-60abf3472269">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="END" doc:id="1b78e5e9-308e-4ee0-973c-a7634ae8bc44" message='#["End of the flow " ++ flow.name]' />
+	</flow>
+</mule>

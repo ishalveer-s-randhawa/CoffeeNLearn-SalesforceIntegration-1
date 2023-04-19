@@ -1,0 +1,578 @@
+{
+	"info": {
+		"_postman_id": "d84c0542-edf1-4a76-a624-516d4da61f5d",
+		"name": "Salesforce CoffeeNLearn (Part1)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Direct REST Request",
+			"item": [
+				{
+					"name": "Generate Access Token",
+					"item": [
+						{
+							"name": "Get SF Access Token",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "username",
+											"value": "{{username}}",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "{{password}}",
+											"type": "text"
+										},
+										{
+											"key": "client_id",
+											"value": "{{consumer_key}}",
+											"type": "text"
+										},
+										{
+											"key": "client_secret",
+											"value": "{{consumer_secret}}",
+											"type": "text"
+										},
+										{
+											"key": "grant_type",
+											"value": "password",
+											"type": "text"
+										},
+										{
+											"key": "security_token",
+											"value": "{{security_token}}",
+											"type": "text"
+										}
+									],
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://login.salesforce.com/services/oauth2/token",
+									"protocol": "https",
+									"host": [
+										"login",
+										"salesforce",
+										"com"
+									],
+									"path": [
+										"services",
+										"oauth2",
+										"token"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get SF Access Token (params)",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "https://login.salesforce.com/services/oauth2/token?username={{username}}&password={{password}}&client_id={{consumer_key}}&client_secret={{consumer_secret}}&grant_type=password&security_token={{security_token}}",
+									"protocol": "https",
+									"host": [
+										"login",
+										"salesforce",
+										"com"
+									],
+									"path": [
+										"services",
+										"oauth2",
+										"token"
+									],
+									"query": [
+										{
+											"key": "username",
+											"value": "{{username}}"
+										},
+										{
+											"key": "password",
+											"value": "{{password}}"
+										},
+										{
+											"key": "client_id",
+											"value": "{{consumer_key}}"
+										},
+										{
+											"key": "client_secret",
+											"value": "{{consumer_secret}}"
+										},
+										{
+											"key": "grant_type",
+											"value": "password"
+										},
+										{
+											"key": "security_token",
+											"value": "{{security_token}}"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Create Sales_Lead",
+					"item": [
+						{
+							"name": "Direct Req",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer  00D5i000006JkOH!ARkAQOlGAjRsq1uCZfkIfmJxD8qA6gIjxBrhZh3Obw8bUQeMi.uDDBX3pehT.Mje31g2J_7ltKxtsJTC0MOlUKKcsYlqVxqz",
+										"type": "default"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"id__c\": 1,\r\n    \"firstname__c\":\"Ishal101\",\r\n    \"lastname__c\": \"Randhawa\",\r\n    \"email__c\": \"ishal.randhawa@gmail.com\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://caeliusconsulting4-dev-ed.my.salesforce.com/services/data/v51.0/sobjects/Sales_Lead__c",
+									"protocol": "https",
+									"host": [
+										"caeliusconsulting4-dev-ed",
+										"my",
+										"salesforce",
+										"com"
+									],
+									"path": [
+										"services",
+										"data",
+										"v51.0",
+										"sobjects",
+										"Sales_Lead__c"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create Sales_lead via Requester",
+							"request": {
+								"auth": {
+									"type": "oauth2",
+									"oauth2": [
+										{
+											"key": "clientSecret",
+											"value": "0885A12C6B3C23FCE32743813F08AB5A14A72793C391651E799605E3AE3ECD6E",
+											"type": "string"
+										},
+										{
+											"key": "clientId",
+											"value": "3MVG9wt4IL4O5wvJ.dy7EVs_VA2BAiInXnVJTn_aoeSD9igy84xdHbMHvV1Q.NqLjVcUfoRmwxqtHvFEXrPbr",
+											"type": "string"
+										},
+										{
+											"key": "accessTokenUrl",
+											"value": "https://login.salesforce.com/services/oauth2/token",
+											"type": "string"
+										},
+										{
+											"key": "authUrl",
+											"value": "https://login.salesforce.com/services/oauth2/authorize",
+											"type": "string"
+										},
+										{
+											"key": "redirect_uri",
+											"value": "http://localhost:8081/callback",
+											"type": "string"
+										},
+										{
+											"key": "addTokenTo",
+											"value": "header",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"id__c\": 1,\r\n    \"firstname__c\":\"Ishal\",\r\n    \"lastname__c\": \"Randhawa\",\r\n    \"email__c\": \"ishal.randhawa@gmail.com\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8081/sf/sales-lead-req",
+									"host": [
+										"localhost"
+									],
+									"port": "8081",
+									"path": [
+										"sf",
+										"sales-lead-req"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Bulk API v2",
+			"item": [
+				{
+					"name": "Job Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8081/sf/jobStatus?id=7505i00000FfSEl",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"sf",
+								"jobStatus"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "7505i00000FfSEl"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upsert",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "localhost:8081/sf/upsert",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"sf",
+								"upsert"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Bulk Upsert",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "localhost:8081/sf/bulk-upsert",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"sf",
+								"bulk-upsert"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Bulk Job",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "localhost:8081/sf/jobDelete?id=7505i00000FfSEl",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"sf",
+								"jobDelete"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "7505i00000FfSEl"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all Ids",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8081/sf/sales-lead/id",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"sf",
+								"sales-lead",
+								"id"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Bulk Delete",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "localhost:8081/sf/sales-lead/bulk-delete",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"sf",
+								"sales-lead",
+								"bulk-delete"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "OAuth2.0",
+			"item": [
+				{
+					"name": "authorize",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8081/authorize",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"authorize"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Sales_Leads",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8081/sf/o2-sales-lead",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"sf",
+								"o2-sales-lead"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Basic Salesforce Operations",
+			"item": [
+				{
+					"name": "Sales_lead",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "[{\r\n    \"id__c\": 1,\r\n    \"firstname__c\":\"Ishal\",\r\n    \"lastname__c\": \"Randhawa\",\r\n    \"email__c\": \"ishal.randhawa@gmail.com\"\r\n}]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8081/sf/sales-lead",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"sf",
+								"sales-lead"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Sales_lead Update",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "[{\r\n    \"Id\":\"a045i00000EwXuwAAF\",\r\n    \"id__c\": 1,\r\n    \"firstname__c\":\"Veer\",\r\n    \"lastname__c\": \"Singh\",\r\n    \"email__c\": \"v.s@gmail.com\"\r\n}]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8081/sf/sales-lead",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"sf",
+								"sales-lead"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Sales_lead Upsert",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "[{\r\n    \"id__c\": 2,\r\n    \"firstname__c\":\"Beauty \",\r\n    \"lastname__c\": \"Mishra\",\r\n    \"email__c\": \"b.m@gmail.com\"\r\n}]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8081/sf/sales-lead-upsert",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"sf",
+								"sales-lead-upsert"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Sales_lead",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8081/sf/sales-lead",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"sf",
+								"sales-lead"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Sales_lead",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "localhost:8081/sf/sales-lead/a045i00000EwXw9AAF",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"sf",
+								"sales-lead",
+								"a045i00000EwXw9AAF"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

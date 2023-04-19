@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce-composite="http://www.mulesoft.org/schema/mule/salesforce-composite" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce-composite http://www.mulesoft.org/schema/mule/salesforce-composite/current/mule-salesforce-composite.xsd">
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="9b3c92a3-5473-4cda-bd22-921d8abda59f" >
+		<salesforce:basic-connection username="user.name@gmail.com" password="passwrod" securityToken="security_token" />
+	</salesforce:sfdc-config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="a4814dda-5469-4bd9-84f4-d8e120288fdb" basePath="sf">
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="sf-bulk-v2-demo-pf" doc:id="b7b43d6f-63bb-4869-8b64-c3972fa5263a" >
+		<http:listener doc:name="Listener" doc:id="aa026b44-0d6b-4ee0-be16-4762d01127ee" config-ref="HTTP_Listener_config" path="bulk-upsert" />
+		<logger level="INFO" doc:name="START" doc:id="5d91b857-b8ec-4ade-8756-0425d1889c59" message='#["Start of flow " ++ flow.name]'/>
+		<file:read doc:name="Read" doc:id="8c316b16-dd6c-447a-a0ce-0be3b541ff3e" path="C:\Users\ITCae\Desktop\sync-files\sf-files\myFile0.csv" />
+		<ee:transform doc:name="Prepare Upsert" doc:id="5acaad15-6019-47e8-9f4c-0d048b6cff2b">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/csv
+---
+payload map ((item, index) ->{
+    id__c:item.id__c as Number,
+    firstname__c:item.firstname__c,
+    lastname__c:item.lastname__c,
+    email__c:item.email__c
+} )]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create-job-bulk-api-v2 objectType="Sales_Lead__c" doc:name="Create job bulk api v 2" doc:id="98a2c8e2-4aed-470c-9dfe-fb4ea3330319" config-ref="Salesforce_Config" lineEnding="CRLF" operation="upsert" externalIdFieldName="id__c"/>
+		<ee:transform doc:name="Prepare Response" doc:id="0a4566af-c85c-49c7-8efa-82f7b2fafbbe" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="END" doc:id="4679acad-00bd-47b7-9a24-f1a65843e0bd" message='#["End of flow " ++ flow.name]' />
+	
+
+</flow>
+	<flow name="sf-get-jobStatus-pf" doc:id="1620cbfb-51e5-486f-bacc-0aacfab0ab95" >
+		<http:listener doc:name="HTTP : 8081 /sf/jobStatus" doc:id="6cd5b131-e989-4a00-bd93-c7d0775f42c0" config-ref="HTTP_Listener_config" path="jobStatus"/>
+		<logger level="INFO" doc:name="START" doc:id="ec2d0250-9f7f-4534-ac6f-d5a7b133116f" message='#["Start of the flow " ++ flow.name]' />
+		<salesforce:get-job-state-bulk-api-v2 doc:name="Get job state bulk api v 2" doc:id="20d9ac9a-4b7b-4742-aac0-b42a1556a981" config-ref="Salesforce_Config" id="#[attributes.queryParams.id]"/>
+		<ee:transform doc:name="Prepare Response" doc:id="a95327e5-0a79-4980-abee-febf064694d3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="END" doc:id="08e3170d-aa30-4831-9785-367ee2d96914" message='#["End of the flow " ++ flow.name]' />
+	</flow>
+	<flow name="sf-bulk-delete-pf" doc:id="cd13fb7f-1401-45cd-9e63-2994ec99ade2" >
+		<http:listener doc:name="HTTP : 8081 /sf/jobDelete" doc:id="0347e99d-17c3-492a-8a8e-61dc64800b16" config-ref="HTTP_Listener_config" path="jobDelete" />
+		<logger level="INFO" doc:name="START" doc:id="b72ecce3-713e-4505-a010-09d6856ac5a5" message='#["Start of the flow " ++ flow.name]' />
+		<salesforce:delete-job-bulk-api-v2 doc:name="Delete job bulk api v 2" doc:id="a243567e-388f-46c5-8e72-11ea7236f657" config-ref="Salesforce_Config" id="#[attributes.queryParams.id]"/>
+		<ee:transform doc:name="Prepare Response" doc:id="03478729-0a8e-408c-899f-02b3bb5ee7ed" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="END" doc:id="97edc4c7-ff6a-417c-b4a3-ad60507896d8" message='#["End of the flow " ++ flow.name]' />
+	</flow>
+	<flow name="sf-upsert-pf" doc:id="491984d9-d1c9-4dbd-bcdd-3f520d488289" >
+		<http:listener doc:name="HTTP : 8081 /sf/upsert" doc:id="564d74f6-47c2-4e5d-81b6-f831ec5ef1b9" config-ref="HTTP_Listener_config" path="upsert" />
+		<logger level="INFO" doc:name="START" doc:id="c0222ceb-453d-4bbc-98ed-66ff0cd10b76" message='#["Start of flow " ++ flow.name]' />
+		<file:read doc:name="Read" doc:id="69c53eb3-0290-47df-982b-1f94cb4b173b" path="C:\Users\ITCae\Desktop\sync-files\sf-files\myFile0.csv"/>
+		<ee:transform doc:name="Prepare Upsert" doc:id="1325ca5c-9ffa-46bd-963d-b002b7e9a768">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map ((item, index) ->{
+    id__c:item.id__c as Number,
+    firstname__c:item.firstname__c,
+    lastname__c:item.lastname__c,
+    email__c:item.email__c
+} )]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:upsert objectType="Sales_Lead__c" externalIdFieldName="id__c" doc:name="Upsert" doc:id="2a98f349-9f98-4078-8e6f-5e2cd7050ee2" config-ref="Salesforce_Config"/>
+		<ee:transform doc:name="Prepare Response" doc:id="c08919a2-6c80-4b6e-af6d-6f6e3ce036d4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="END" doc:id="305a3111-b5ae-460c-875a-bbb382d22664" message='#["End of flow " ++ flow.name]' />
+	</flow>
+	<flow name="sf-create-pf" doc:id="46e58ab8-6980-44a1-9830-e1202ffefaa8">
+		<http:listener doc:name="HTTP : 8081 /sf/sales-lead/id" doc:id="27ba347c-2c28-49aa-ab65-63df1d5d0ec3" config-ref="HTTP_Listener_config" path="sales-lead/id" />
+		<logger level="INFO" doc:name="START" doc:id="b25ccd79-b26a-46fd-9804-6ca1742fe723" message='#["Start of the flow " ++ flow.name]' />
+		<salesforce:query doc:name="Query" doc:id="135dbdaa-c182-47dc-aeb9-28653a327261" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[SELECT id from sales_lead__c ]]></salesforce:salesforce-query>
+		</salesforce:query>
+		<ee:transform doc:name="Get Ids" doc:id="c8070e11-2c17-40bc-b899-00cc51c9fb46">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload.Id]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Prepare CSV" doc:id="059220bb-75e0-4378-8747-51b395eed1b2">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/csv
+---
+payload map (item,index) -> {
+    "Id": item
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Write" doc:id="1cec98fb-11ed-4a35-9104-544ba0ab89da" path="C:\Users\ITCae\Desktop\new\myFile.csv" />
+		<logger level="INFO" doc:name="END" doc:id="6132a478-6ea7-4192-8d3a-60b2ed32807f" message='#["End of the flow " ++ flow.name]' />
+	</flow>
+	<flow name="sf-bulk-v2-delete-demo-pf" doc:id="9ffaa2bc-2d11-4f46-89b0-02e61e39fdd6" >
+		<http:listener doc:name="HTTP : 8081 /sf/sales-lead/bulk-delete" doc:id="af31e6e4-c257-466d-8db1-da7aa458bb6f" config-ref="HTTP_Listener_config" path="sales-lead/bulk-delete" />
+		<logger level="INFO" doc:name="START" doc:id="50e305dd-4818-4f09-9013-c79ceb86bf29" message='#["Start of flow " ++ flow.name]' />
+		<file:read doc:name="Read" doc:id="ca2f915e-dcf0-4201-bfa6-107a0b156601" path="C:\Users\ITCae\Desktop\new\myFile.csv" />
+		<salesforce:create-job-bulk-api-v2 objectType="Sales_Lead__c" operation="delete" doc:name="Create job bulk api v " doc:id="d685fa41-d50a-4dbd-a043-6f6bccbf2ada" config-ref="Salesforce_Config" lineEnding="CRLF" externalIdFieldName="id__c" />
+		<ee:transform doc:name="Prepare Response" doc:id="4f5f6a15-3f89-4efb-93e6-0475440d2f15" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="END" doc:id="1b1e5288-b973-4528-8011-ad5c90a662ed" message='#["End of flow " ++ flow.name]' />
+	
+</flow>
+</mule>

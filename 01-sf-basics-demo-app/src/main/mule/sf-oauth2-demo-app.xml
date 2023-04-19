@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<salesforce:sfdc-config name="Salesforce_Config_Oauth2"
+		doc:name="Salesforce Config"
+		doc:id="32e2ff85-2507-4bd5-9092-6b37e4e9ca92"
+		fetchAllApexSoapMetadata="true" fetchAllApexRestMetadata="true">
+		<salesforce:config-with-oauth-connection>
+			<salesforce:oauth-authorization-code
+				consumerKey="consumer_key"
+				consumerSecret="consumer_secret" />
+			<salesforce:oauth-callback-config
+				listenerConfig="HTTP_Listener_config" callbackPath="/callback"
+				authorizePath="/authorize"
+				externalCallbackUrl="http://localhost:8081/callback" />
+		</salesforce:config-with-oauth-connection>
+
+
+
+	</salesforce:sfdc-config>
+	<flow name="sf-oauth2-pf"
+		doc:id="0036a8c4-632f-4a31-9e2f-d56353a9410b">
+		<http:listener doc:name="HTTP : 8081 /sf/02-sales-lead"
+			doc:id="6890375c-0a1e-466f-b5cc-4b6bd9eff762"
+			config-ref="HTTP_Listener_config" path="o2-sales-lead" />
+		<logger level="INFO" doc:name="START"
+			doc:id="ae9b0f18-cf1f-4711-8e32-5d5de9ca5ec2"
+			message='#["Start of the flow " ++ flow.name]' />
+		<salesforce:query doc:name="Sales_Lead__c"
+			doc:id="ea1c65dd-75dc-498a-a265-cfd904628a2d"
+			config-ref="Salesforce_Config_Oauth2">
+			<salesforce:salesforce-query><![CDATA[SELECT FIELDS(CUSTOM) FROM sales_lead__c LIMIT 200]]></salesforce:salesforce-query>
+		</salesforce:query>
+		<ee:transform doc:name="Prepare Response"
+			doc:id="13896d36-e993-4773-8b6a-0eb5ecfca9f5">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="END"
+			doc:id="894aa476-43cb-4163-aa17-f302cdc0fd87"
+			message='#["End of the flow " ++ flow.name]' />
+	</flow>
+</mule>
